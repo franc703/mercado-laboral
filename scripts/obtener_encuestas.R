@@ -24,9 +24,9 @@ pagina <- read_html("https://www.ine.gov.py/microdatos/microdatos.php")
 
 # obtener todos los archivos de la pagina
 files <- pagina %>%
-  html_nodes("a") %>%       # find all links
-  html_attr("href") %>%     # get the url
-  str_subset("\\.SAV")   # find those that end in xlsx
+  html_nodes("a") %>%       #  encontramos todos los links
+  html_attr("href") %>%     #  obtenemos los url
+  str_subset("\\.SAV")   #  encontramos todos los archivos que terminan en SAV
 
 
 # solo los archivos que necesito
