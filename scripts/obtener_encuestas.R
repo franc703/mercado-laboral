@@ -15,7 +15,8 @@ pacman::p_load(tidyverse, #  para data management
                haven, #  para trabajar con dataos en formato dta o sav,
                rvest, #  para realizar web scrapping
                stringr, # para trabajar con strings 
-               xml2 # para trabajar con la html web
+               xml2, # para trabajar con la html web
+               urltools # para trabajar con urls
 )
 
 
@@ -34,15 +35,14 @@ files <- files %>%
   tail(-4)
 
 # subtituir url strings
-files <- files %>%
-  str_replace(" ","%20") 
+files.url <- files %>%
+  url_escape(reserved = ":/")
 
-# creo que esta solucion es medio hacky
 # los url tienen espacios y los links aparentemente reemplazan este espacio por %20
 # deberia chequear y aprender el por que.
 
 # descargar los archivos
-data <- files %>% purrr::map(read_sav)
+data <- files.url %>% purrr::map(read_sav)
 
 # crear nombres
 nombres <- basename(files)
