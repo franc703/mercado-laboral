@@ -1,0 +1,221 @@
+---
+title: "Mercado Laboral Paraguayo"
+author: "Research Team"
+date: "4/29/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# load packages
+pacman::p_load(
+  tidyverse,
+  here,
+  janitor,
+  srvyr,
+  lubridate,
+  haven
+)
+```
+
+```{r, include=FALSE}
+# cargar todos los archivos
+files <- list.files(here("raw_data"), pattern = "SAV", full.names = T)
+
+# leer todos los archivos
+files <- purrr::map(files, read_sav)
+
+# crear nombres
+nombres <- list.files(here("raw_data"), "SAV")
+
+# eliminar reg02 y convertir todo a miniscula
+nombres <- nombres %>%
+  str_remove("^(REG02_)") %>%
+  str_remove("(\\.SAV)$") %>%
+  tolower()
+
+# asignar nombres
+files <- files %>% setNames(nombres)
+
+# crear data frames separados
+list2env(files, envir = .GlobalEnv)
+
+# drop files
+rm(files)
+
+# I need to fix the name of the data frames so they can be more consistent
+```
+
+```{r}
+# validando los calculos 2020 cuarto trimestre
+
+# fuerza de trabajo
+
+# mayor o igual a 15 anos
+e_420 <- `ephc_t4-2020` %>% 
+  filter(P02 >= 15)
+
+# crear la variable de al menos una hora en los ultimos 7 dias
+e_420 <- e_420 %>% 
+  mutate(trabajo = if_else(is.na(A03), A02, A03))
+
+# personas ocupadas
+ocu_420 <- e_420 %>% 
+  filter(trabajo %in% c(1)) %>% # trabajo al menos una hora en la ultima semana
+  count(P06, wt = FEX) # crear tabla con los pesos indicados
+
+# habria podido trabajar
+e_420 <- e_420 %>%
+  mutate(activo = if_else(is.na(A08),A07, A08)) # personas que buscaron trabajo en 7 y 30 dias
+
+# disponible
+e_420 <- e_420 %>%
+  mutate(disponible = if_else(is.na(activo),A04, activo)) # personas que estaban disponible y personas que tienen trabajo pero no trabajaron
+
+# personas desocupadas
+des_420 <- e_420 %>% 
+  filter(trabajo %in% c(6)) %>%  # no trabajo ni una hora
+  filter(disponible == 1) %>% # estaba disponible para trabajar y buscaron trabajo
+  count(P06, wt = FEX) # crear tabla con desocupados
+
+# unir las tablas
+ft_420 <- inner_join(ocu_420, des_420, by = "P06")
+ft_420 <- ft_420 %>% mutate(total = n.x + n.y)
+```
+
+
+```{r}
+# validando los calculos 2020 tercer trimestre
+
+# fuerza de trabajo
+
+# mayor o igual a 15 anos
+e_320 <- `ephc_t3-2020` %>% 
+  filter(P02 >= 15)
+
+# crear la variable de al menos una hora en los ultimos 7 dias
+e_320 <- e_320 %>% 
+  mutate(trabajo = if_else(is.na(A03), A02, A03))
+
+# personas ocupadas
+ocu_320 <- e_320 %>% 
+  filter(trabajo %in% c(1)) %>% # trabajo al menos una hora en la ultima semana
+  count(P06, wt = FEX) # crear tabla con los pesos indicados
+
+# habria podido trabajar
+e_320 <- e_320 %>%
+  mutate(activo = A07) # personas que buscaron trabajo en 7 dias
+
+# disponible
+e_320 <- e_320 %>%
+  mutate(disponible = if_else(is.na(activo),A04, activo)) # personas que estaban disponible y personas que tienen trabajo pero no trabajaron
+
+# personas desocupadas
+des_320 <- e_320 %>% 
+  filter(trabajo %in% c(6)) %>%  # no trabajo ni una hora
+  filter(disponible == 1) %>% # estaba disponible para trabajar y buscaron trabajo
+  count(P06, wt = FEX) # crear tabla con desocupados
+
+# unir las tablas
+ft_320 <- inner_join(ocu_320, des_320, by = "P06")
+ft_320 <- ft_320 %>% mutate(total = n.x + n.y)
+```
+
+
+
+```{r}
+# validando los calculos 2020 segundo trimestre
+
+# fuerza de trabajo
+
+# mayor o igual a 15 anos
+e_220 <- ephc_t2_2020 %>% 
+  filter(P02 >= 15)
+
+# crear la variable de al menos una hora en los ultimos 7 dias
+e_220 <- e_220 %>% 
+  mutate(trabajo = if_else(is.na(A03), A02, A03))
+
+# personas ocupadas
+ocu_220 <- e_220 %>% 
+  filter(trabajo %in% c(1)) %>% # trabajo al menos una hora en la ultima semana
+  count(P06, wt = FEX) # crear tabla con los pesos indicados
+
+# habria podido trabajar
+e_220 <- e_220 %>%
+  mutate(activo = A07) # personas que buscaron trabajo en 7 dias
+
+# disponible
+e_220 <- e_220 %>%
+  mutate(disponible = if_else(is.na(activo),A04, activo)) # personas que estaban disponible y personas que tienen trabajo pero no trabajaron
+
+# personas desocupadas
+des_220 <- e_220 %>% 
+  filter(trabajo %in% c(6)) %>%  # no trabajo ni una hora
+  filter(disponible == 1) %>% # estaba disponible para trabajar y buscaron trabajo
+  count(P06, wt = FEX) # crear tabla con desocupados
+
+# unir las tablas
+ft_220 <- inner_join(ocu_220, des_220, by = "P06")
+ft_220 <- ft_220 %>% mutate(total = n.x + n.y)
+```
+
+```{r}
+# validando los calculos 2020 cuarto trimestre
+
+# fuerza de trabajo
+
+# mayor o igual a 15 anos
+e_120 <- ephc_t1_2020 %>% 
+  filter(P02 >= 15)
+
+# crear la variable de al menos una hora en los ultimos 7 dias
+e_120 <- e_120 %>% 
+  mutate(trabajo = if_else(is.na(A03), A02, A03))
+
+# personas ocupadas
+ocu_120 <- e_120 %>% 
+  filter(trabajo %in% c(1)) %>% # trabajo al menos una hora en la ultima semana
+  count(P06, wt = FEX) # crear tabla con los pesos indicados
+
+# habria podido trabajar
+e_120 <- e_120 %>%
+  mutate(activo = if_else(is.na(A08),A07, A08)) # personas que buscaron trabajo en 7 y 30 dias
+
+# disponible
+e_120 <- e_120 %>%
+  mutate(disponible = if_else(is.na(activo),A04, activo)) # personas que estaban disponible y personas que tienen trabajo pero no trabajaron
+
+# personas desocupadas
+des_120 <- e_120 %>% 
+  filter(trabajo %in% c(6)) %>%  # no trabajo ni una hora
+  filter(disponible == 1) %>% # estaba disponible para trabajar y buscaron trabajo
+  count(P06, wt = FEX) # crear tabla con desocupados
+
+# unir las tablas
+ft_120 <- inner_join(ocu_120, des_120, by = "P06")
+ft_120 <- ft_120 %>% mutate(total = n.x + n.y)
+```
+
+```{r}
+# la pregunta si la personas buscaron trabajo en el ultimo mes fue solamente agregada para el 4to trimestre y en el primer trimestre y de alguna form incluida en la definicion de fuerza de trabajo
+
+# tengo tres razones por las que mis datos no igualan a las del boletin
+
+# no tengo la definicion plasmada en mi codigo utilizando las variables correctas
+# la definicion varia bastante de un trimestre a otro
+# los datos del boletin no son los ultimos
+```
+
+
+```{r}
+# chequear count hace su trabajo
+descr::crosstab(e_420$P06, e_420$trabajo, weight = e_420$FEX)
+```
+
+
+
+
